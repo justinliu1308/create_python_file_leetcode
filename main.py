@@ -53,7 +53,7 @@ def main(link):
         question =  soup.get_text().replace('\n',' ')
         question = question.split('Example')[0][:-1]        # splice to drop the unnecessary special character
         question_lines = textwrap.wrap(question, width = 135)
-        return filename, difficulty, question_lines
+        return split_link, filename, difficulty, question_lines
 
     def check_file_exists(filename):
         # Check if filename already exists, and if yes, do nothing to prevent file overwrite and data loss
@@ -62,9 +62,11 @@ def main(link):
         else:
             return False
 
-    def create_local_file(filename, link, difficulty, question_lines):
+    def create_local_file(split_link, filename, difficulty, question_lines):
         # Create a LeetCode problem local Python file
-        if 'description' in link: link = link[:-12]     # https:// ...problem-name/description/ isn't necessary, just ..problem-name/ is sufficient
+        # if 'description' in link: link = link[:-12]     # https:// ...problem-name/description/ isn't necessary, just ..problem-name/ is sufficient
+        # 9/24/23 update - need to handle other forms of links such as query links: https://...problem-name/?envType=daily-question
+        link = split_link[0] + split_link[2] + split_link[3] + split_link[4]
         new_file = open(filename, 'w')
         new_file.write('# ' + link + '\n# ' + difficulty + '\n\n')
         for line in question_lines:
@@ -72,12 +74,12 @@ def main(link):
         new_file.write('\n# My code:\n\n')
         new_file.close()
 
-    filename, difficulty, question_lines = api_query(link)
+    split_link, filename, difficulty, question_lines = api_query(link)
     exist = check_file_exists(filename)
     if exist == True:
         print(f"{filename} already exists. Nothing was done in order to prevent file overwrite.\nPulling existing file...")
     else:
-        create_local_file(filename, link, difficulty, question_lines)
+        create_local_file(split_link, filename, difficulty, question_lines)
         print("New file created:", filename, "\nOpening new file...")
 
     # Open the file in new tab
@@ -86,11 +88,13 @@ def main(link):
 if __name__ == "__main__":
     # https://leetcode.com/problems/same-tree/
     if len(sys.argv) == 2:
-        link = sys.argv[1]
-        main(link)
+        link = str(sys.argv[1])
+        try:
+            main(link)
+        except:
+            print("Fatal error creating LeetCode file")
     else:
-        print("\nPlease provide one command line argument.\n")
-
+        print("Please provide a valid website URL as an argument to run the program.\n")
 
     # Testing - will generate 10 different files. Need to visually verify.
 
@@ -104,4 +108,5 @@ if __name__ == "__main__":
     # main('https://leetcode.com/problems/can-i-win/')
     # main('https://leetcode.com/problems/satisfiability-of-equality-equations/')
     # main('https://leetcode.com/problems/word-search/')
+    # main('https://leetcode.com/problems/find-the-difference/?envType=daily-question')
     
